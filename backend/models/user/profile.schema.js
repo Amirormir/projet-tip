@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import validator from "validator";
+import { validatePhone } from "../../validators/common/contact.validator.js";
 
 const { Schema } = mongoose;
 
@@ -10,7 +10,7 @@ const ProfileSchema = new Schema(
       required: true,
       validate: {
         validator: function (v) {
-          if (!validator.isLength(v, { min: 2, max: 50 })) {
+          if (!v || v.length < 2 || v.length > 50) {
             throw new Error("Le prénom doit contenir entre 2 et 50 caractères");
           }
           return true;
@@ -22,7 +22,7 @@ const ProfileSchema = new Schema(
       required: true,
       validate: {
         validator: function (v) {
-          if (!validator.isLength(v, { min: 2, max: 50 })) {
+          if (!v || v.length < 2 || v.length > 50) {
             throw new Error("Le nom doit contenir entre 2 et 50 caractères");
           }
           return true;
@@ -34,10 +34,10 @@ const ProfileSchema = new Schema(
       required: true,
       validate: {
         validator: function (v) {
-          if (!validator.isDate(v)) {
+          if (!v || !(v instanceof Date)) {
             throw new Error("La date de naissance est invalide");
           }
-          const age = new Date().getFullYear() - new Date(v).getFullYear();
+          const age = new Date().getFullYear() - v.getFullYear();
           if (age < 18) {
             throw new Error("L'utilisateur doit être majeur");
           }
@@ -54,12 +54,7 @@ const ProfileSchema = new Schema(
       type: String,
       required: true,
       validate: {
-        validator: function (v) {
-          if (!validator.isMobilePhone(v, "fr-FR")) {
-            throw new Error("Le numéro de téléphone est invalide");
-          }
-          return true;
-        },
+        validator: validatePhone,
       },
     },
   },

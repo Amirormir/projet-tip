@@ -1,5 +1,9 @@
 import mongoose from "mongoose";
-import validator from "validator";
+import {
+  validateAddress,
+  validateZipCode,
+  validateCity,
+} from "../../validators/common/address.validator.js";
 
 const { Schema } = mongoose;
 
@@ -9,14 +13,7 @@ const AddressSchema = new Schema(
       type: String,
       required: true,
       validate: {
-        validator: function (v) {
-          if (!validator.isLength(v, { min: 3, max: 100 })) {
-            throw new Error(
-              "L'adresse doit contenir entre 3 et 100 caractères"
-            );
-          }
-          return true;
-        },
+        validator: validateAddress,
       },
     },
     addressComplement: {
@@ -24,7 +21,7 @@ const AddressSchema = new Schema(
       required: false,
       validate: {
         validator: function (v) {
-          if (v && !validator.isLength(v, { min: 3, max: 100 })) {
+          if (v && (v.length < 3 || v.length > 100)) {
             throw new Error(
               "Le complément d'adresse doit contenir entre 3 et 100 caractères"
             );
@@ -37,25 +34,20 @@ const AddressSchema = new Schema(
       type: String,
       required: true,
       validate: {
-        validator: function (v) {
-          if (!validator.isLength(v, { min: 2, max: 50 })) {
-            throw new Error("La ville doit contenir entre 2 et 50 caractères");
-          }
-          return true;
-        },
+        validator: validateCity,
       },
     },
     zipCode: {
       type: String,
       required: true,
       validate: {
-        validator: function (v) {
-          if (!validator.isPostalCode(v, "FR")) {
-            throw new Error("Le code postal est invalide");
-          }
-          return true;
-        },
+        validator: validateZipCode,
       },
+    },
+    country: {
+      type: String,
+      required: true,
+      default: "France",
     },
   },
   {

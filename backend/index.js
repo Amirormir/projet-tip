@@ -4,6 +4,9 @@ import cors from "cors";
 import dotenv from "dotenv";
 import userRoutes from "./routes/user.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import { errorHandler } from "./middlewares/error.middleware.js";
+import { authenticate } from "./middlewares/auth.middleware.js";
+import { checkBlacklist } from "./middlewares/blacklist.middleware.js";
 
 dotenv.config();
 console.log("MONGO_URL:", process.env.MONGO_URL);
@@ -22,6 +25,9 @@ app.use("/api/auth", authRoutes);
 app.get("/", (req, res) => {
   res.json({ message: "Bienvenue sur l'API" });
 });
+
+// Pour le middleware d'erreur (doit être le dernier)
+app.use(errorHandler);
 
 // MongoDB connection
 mongoose

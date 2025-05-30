@@ -5,7 +5,7 @@ import { AuthErrors } from "../errors/auth.errors.js";
 import tokenService from "../services/token.service.js";
 import Blacklist from "../models/blacklist.js";
 
-export const register = async (req, res) => {
+export const register = async (req, res, next) => {
   try {
     const {
       username,
@@ -15,7 +15,7 @@ export const register = async (req, res) => {
       address: { address, addressComplement, city, zipCode, country },
     } = req.body;
 
-    // Créer l'utilisateur pour la validation
+    // Créer l'utilisateur
     const newUser = new User({
       username,
       email,
@@ -36,68 +36,42 @@ export const register = async (req, res) => {
       },
     });
 
-    // Valider l'utilisateur
-    await newUser.validate();
-
-    // Hash le mot de passe après validation
+    // Hash le mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
     newUser.password = hashedPassword;
 
+    // Sauvegarder l'utilisateur
     const savedUser = await newUser.save();
-    console.log("Utilisateur sauvegardé:", savedUser);
 
-    try {
-      // Générer les tokens
-      const tokens = tokenService.generateTokenPair(savedUser);
-      console.log("Tokens générés avec succès");
+    // Générer les tokens
+    const tokens = tokenService.generateTokenPair(savedUser);
 
-      res.status(201).json({
-        status: "SUCCESS",
-        message: "Utilisateur créé avec succès",
-        data: {
-          user: savedUser,
-          ...tokens,
-        },
-      });
-    } catch (tokenError) {
-      console.error("Erreur lors de la génération des tokens:", tokenError);
-      // On renvoie quand même l'utilisateur créé, mais sans les tokens
-      res.status(201).json({
-        status: "PARTIAL_SUCCESS",
-        message:
-          "Utilisateur créé mais erreur lors de la génération des tokens",
-        data: {
-          user: savedUser,
-        },
-      });
-    }
+    res.status(201).json({
+      status: "SUCCESS",
+      message: "Utilisateur créé avec succès",
+      data: {
+        user: savedUser,
+        ...tokens,
+      },
+    });
   } catch (err) {
-    console.error("Erreur complète:", err);
-
     if (err.name === "ValidationError") {
       return res.status(400).json({
         status: "FAILED",
-        message: AuthErrors.VALIDATION_FAILED,
-        error: err.message,
+        message: err.message,
       });
     }
-
     if (err.code === 11000) {
       return res.status(400).json({
         status: "FAILED",
-        message: AuthErrors.USER_ALREADY_EXISTS,
+        message: "Cet email ou nom d'utilisateur est déjà utilisé",
       });
     }
-
-    res.status(500).json({
-      status: "FAILED",
-      message: AuthErrors.INTERNAL_SERVER_ERROR,
-      error: process.env.NODE_ENV === "development" ? err.message : undefined,
-    });
+    next(err);
   }
 };
 
-export const login = async (req, res) => {
+export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -131,15 +105,11 @@ export const login = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({
-      status: "FAILED",
-      message: AuthErrors.INTERNAL_SERVER_ERROR,
-      error: process.env.NODE_ENV === "development" ? err.message : undefined,
-    });
+    next(err);
   }
 };
 
-export const refreshToken = async (req, res) => {
+export const refreshToken = async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
 
@@ -164,40 +134,53 @@ export const refreshToken = async (req, res) => {
       data: tokens,
     });
   } catch (err) {
-    res.status(401).json({
-      status: "FAILED",
-      message: AuthErrors.INVALID_REFRESH_TOKEN,
-    });
+    next(err);
   }
 };
 
-export const logout = async (req, res) => {
+export const logout = async (req, res, next) => {
   try {
-    const { accessToken } = req.body; // Récupérer le token depuis le body
+    const { accessToken } = req.body;
 
-    const checkIfBlacklisted = await Blacklist.findOne({ token: accessToken });
-    if (checkIfBlacklisted) {
-      return res.status(401).json({
+    if (!accessToken) {
+      return res.status(400).json({
         status: "FAILED",
-        message: AuthErrors.INVALID_ACCESS_TOKEN,
+        message: "Token d'accès requis",
       });
     }
 
+    // Vérifier si le token est valide
+    try {
+      tokenService.verifyAccessToken(accessToken);
+    } catch (error) {
+      return res.status(401).json({
+        status: "FAILED",
+        message: "Token invalide",
+      });
+    }
+
+    // Vérifier si le token n'est pas déjà dans la blacklist
+    const existingToken = await Blacklist.findOne({ token: accessToken });
+    if (existingToken) {
+      return res.status(200).json({
+        status: "SUCCESS",
+        message: "Déconnexion réussie",
+      });
+    }
+
+    // Ajouter le token à la blacklist
     const newBlacklist = new Blacklist({
       token: accessToken,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Expire dans 24h
     });
 
     await newBlacklist.save();
 
     res.status(200).json({
-      status: "SUCCESS", // Correction de "SUCCES" à "SUCCESS"
+      status: "SUCCESS",
       message: "Déconnexion réussie",
     });
   } catch (err) {
-    res.status(500).json({
-      status: "FAILED",
-      message: AuthErrors.INTERNAL_SERVER_ERROR,
-      error: process.env.NODE_ENV === "development" ? err.message : undefined,
-    });
+    next(err);
   }
 };
