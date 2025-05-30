@@ -157,3 +157,103 @@ docker-compose up
 ## Licence
 
 [À DÉFINIR]
+
+## Gestion des Parcs
+
+### Endpoints Parcs
+
+- `POST /api/parks` - Créer un parc (protégé par authentification JWT)
+- `GET /api/parks` - Lister tous les parcs
+- `GET /api/parks/:id` - Détails d'un parc
+- `PUT /api/parks/:id` - Modifier un parc
+- `DELETE /api/parks/:id` - Supprimer un parc
+
+### Exemple de création de parc
+
+**Headers :**
+
+```
+Authorization: Bearer <votre_access_token>
+Content-Type: application/json
+```
+
+**Body :**
+
+```json
+{
+  "name": "Parc Solaire de Test",
+  "parkId": "PS-TEST-001",
+  "commissioningDate": "2024-03-30T00:00:00.000Z",
+  "location": {
+    "address": "123 Route du Soleil",
+    "zipCode": "75001",
+    "city": "Paris",
+    "department": "Paris",
+    "region": "Île-de-France",
+    "country": "France",
+    "coordinates": {
+      "latitude": 48.8566,
+      "longitude": 2.3522,
+      "altitude": 35
+    }
+  },
+  "technical": {
+    "installedPower": 10.5,
+    "totalSurface": 25000,
+    "panelCount": 40000,
+    "panelType": "Monocristallin",
+    "inverterType": "SMA",
+    "panelOrientation": 180,
+    "panelTilt": 30,
+    "installationType": "terrestre"
+  },
+  "administrative": {
+    "contractNumber": "CONTRACT-2024-001",
+    "contractStartDate": "2024-01-01T00:00:00.000Z",
+    "contractEndDate": "2034-01-01T00:00:00.000Z",
+    "purchasePrice": 85.5,
+    "contractType": "CRE",
+    "status": "en_construction"
+  },
+  "maintenance": {
+    "type": "préventive",
+    "description": "Maintenance préventive trimestrielle des panneaux solaires",
+    "startDate": "2024-04-01T09:00:00.000Z",
+    "endDate": "2024-04-01T17:00:00.000Z",
+    "status": "planifiée",
+    "technician": "<userId>",
+    "cost": 2500,
+    "notes": "Vérification des connexions et nettoyage des panneaux"
+  },
+  "performance": {
+    "date": "2024-03-30T00:00:00.000Z",
+    "energyProduction": 8500,
+    "efficiency": 85.5,
+    "temperature": 25,
+    "weatherConditions": "ensoleillé",
+    "notes": "Production optimale grâce aux conditions météorologiques favorables"
+  },
+  "address": "123 Route du Soleil",
+  "city": "Paris",
+  "zipCode": "75001",
+  "country": "France",
+  "contactPhone": "+33612345678",
+  "contactEmail": "contact@parc-solaire-test.fr",
+  "totalPower": 10.5,
+  "installationDate": "2024-01-15T00:00:00.000Z",
+  "status": "actif"
+}
+```
+
+**Remarque :**
+
+- Le champ `technician` doit contenir un ID utilisateur valide (ObjectId MongoDB)
+- Les champs `createdBy` et `lastModifiedBy` sont automatiquement remplis à partir du token JWT
+
+## Utilisation du token JWT
+
+Pour toutes les routes protégées, ajoutez dans les headers :
+
+```
+Authorization: Bearer <votre_access_token>
+```
