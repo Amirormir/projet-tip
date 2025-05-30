@@ -2,28 +2,43 @@
 
 ## Description
 
-Backend de l'application TIP, développé avec Node.js, Express et MongoDB. Ce projet implémente un système d'authentification complet avec gestion des tokens JWT.
+Backend de l'application TIP, développé avec Node.js, Express et MongoDB. Ce projet implémente un système d'authentification complet avec gestion des tokens JWT et une gestion avancée des parcs solaires.
 
 ## Structure du Projet
 
 ```
 backend/
-├── controllers/     # Contrôleurs de l'application
-├── models/         # Schémas Mongoose
-├── routes/         # Routes de l'API
-├── services/       # Services métier
-├── errors/         # Messages d'erreur centralisés
-├── utils/          # Utilitaires
-└── index.js        # Point d'entrée de l'application
+├── controllers/         # Contrôleurs par entité (auth, user, park)
+├── models/
+│   ├── park/            # Schémas du parc (modulaires)
+│   └── user/            # Schémas utilisateur (modulaires)
+│   └── blacklist.js     # Schéma pour la blacklist des tokens
+├── routes/              # Routes par entité (auth, user, park)
+├── middlewares/         # Middlewares (auth, validation, blacklist, erreurs)
+├── services/            # Services métier (ex: gestion des tokens)
+├── validators/
+│   ├── park/            # Validateurs spécifiques au parc
+│   ├── common/          # Validateurs communs (adresse, contact)
+│   └── user.validator.js
+├── tests/               # Tests unitaires et d'intégration
+├── errors/              # Gestion centralisée des erreurs
+├── utils/               # Fonctions utilitaires
+├── index.js             # Point d'entrée
+├── package.json
+├── jest.config.js
+└── Dockerfile
 ```
 
 ## Fonctionnalités
 
 - Authentification complète (inscription, connexion, déconnexion)
 - Gestion des tokens JWT (access token et refresh token)
-- Validation des données
+- Validation avancée des données (via middlewares et validateurs personnalisés)
 - Gestion des erreurs centralisée
 - Blacklist des tokens
+- Gestion CRUD des parcs solaires
+- Architecture modulaire (schémas, validateurs, middlewares)
+- Tests unitaires (Jest)
 
 ## Prérequis
 
@@ -88,6 +103,22 @@ docker-compose up
 - `POST /api/auth/logout` - Déconnexion
 - `POST /api/auth/refresh-token` - Rafraîchissement du token
 
+### Utilisateurs
+
+- `POST /api/users` - Créer un utilisateur
+- `GET /api/users` - Lister tous les utilisateurs
+- `GET /api/users/:id` - Détails d'un utilisateur
+- `PUT /api/users/:id` - Modifier un utilisateur
+- `DELETE /api/users/:id` - Supprimer un utilisateur
+
+### Parcs
+
+- `POST /api/parks` - Créer un parc (protégé par authentification JWT)
+- `GET /api/parks` - Lister tous les parcs
+- `GET /api/parks/:id` - Détails d'un parc
+- `PUT /api/parks/:id` - Modifier un parc
+- `DELETE /api/parks/:id` - Supprimer un parc
+
 ## Format des Données
 
 ### Inscription
@@ -123,52 +154,7 @@ docker-compose up
 }
 ```
 
-## Sécurité
-
-- Hachage des mots de passe avec bcrypt
-- Tokens JWT pour l'authentification
-- Blacklist des tokens invalides
-- Validation des données d'entrée
-
-## Développement
-
-- Utilisation de ES Modules
-- Architecture MVC
-- Gestion des erreurs centralisée
-- Logging des erreurs
-
-## Améliorations Futures
-
-- [ ] Implémentation des middlewares de validation
-- [ ] Ajout de tests unitaires
-- [ ] Documentation API avec Swagger
-- [ ] Système de logging structuré
-- [ ] Rate limiting
-- [ ] Gestion des rôles utilisateurs
-
-## Contribution
-
-1. Fork le projet
-2. Créer une branche pour votre fonctionnalité
-3. Commiter vos changements
-4. Pousser vers la branche
-5. Ouvrir une Pull Request
-
-## Licence
-
-[À DÉFINIR]
-
-## Gestion des Parcs
-
-### Endpoints Parcs
-
-- `POST /api/parks` - Créer un parc (protégé par authentification JWT)
-- `GET /api/parks` - Lister tous les parcs
-- `GET /api/parks/:id` - Détails d'un parc
-- `PUT /api/parks/:id` - Modifier un parc
-- `DELETE /api/parks/:id` - Supprimer un parc
-
-### Exemple de création de parc
+### Création d'un parc
 
 **Headers :**
 
@@ -250,10 +236,56 @@ Content-Type: application/json
 - Le champ `technician` doit contenir un ID utilisateur valide (ObjectId MongoDB)
 - Les champs `createdBy` et `lastModifiedBy` sont automatiquement remplis à partir du token JWT
 
-## Utilisation du token JWT
+## Middlewares
 
-Pour toutes les routes protégées, ajoutez dans les headers :
+- **auth.middleware.js** : vérifie et décode le token JWT, ajoute l'utilisateur à `req.user`
+- **validation.middleware.js** : valide les données d'entrée selon les schémas
+- **blacklist.middleware.js** : gère la blacklist des tokens
+- **error.middleware.js** : gestion centralisée des erreurs
 
+## Services
+
+- **token.service.js** : génération, vérification et gestion des tokens JWT
+
+## Tests
+
+- Les tests sont situés dans le dossier `tests/` et utilisent Jest
+- Pour lancer les tests :
+
+```bash
+npm test
 ```
-Authorization: Bearer <votre_access_token>
-```
+
+## Sécurité
+
+- Hachage des mots de passe avec bcrypt
+- Tokens JWT pour l'authentification
+- Blacklist des tokens invalides
+- Validation des données d'entrée
+
+## Développement
+
+- Utilisation de ES Modules
+- Architecture MVC modulaire
+- Gestion des erreurs centralisée
+- Logging des erreurs
+
+## Améliorations Futures
+
+- [ ] Documentation API avec Swagger
+- [ ] Système de logging structuré
+- [ ] Rate limiting
+- [ ] Gestion des rôles utilisateurs avancée
+- [ ] Plus de tests unitaires et d'intégration
+
+## Contribution
+
+1. Fork le projet
+2. Créer une branche pour votre fonctionnalité
+3. Commiter vos changements
+4. Pousser vers la branche
+5. Ouvrir une Pull Request
+
+## Licence
+
+[À DÉFINIR]
