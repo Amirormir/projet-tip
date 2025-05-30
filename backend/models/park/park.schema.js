@@ -8,8 +8,8 @@ import {
   validateAddress,
   validateZipCode,
   validateCity,
-} from "../common/address.validator.js";
-import { validatePhone } from "../common/contact.validator.js";
+} from "../../validators/common/address.validator.js";
+import { validatePhone } from "../../validators/common/contact.validator.js";
 
 const ParkSchema = new mongoose.Schema(
   {

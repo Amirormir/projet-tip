@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import userRoutes from "./routes/user.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import parkRoutes from "./routes/park.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import { authenticate } from "./middlewares/auth.middleware.js";
 import { checkBlacklist } from "./middlewares/blacklist.middleware.js";
@@ -26,6 +27,7 @@ app.use(express.json());
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/parks", parkRoutes);
 
 // Test route
 app.get("/", (req, res) => {
@@ -46,7 +48,7 @@ mongoose
   });
 
 // Start server
-if (process.env.NODE_ENV !== "test") {
+if (process.env.MONGO_URL) {
   app.listen(5000, () => {
     console.log("Serveur tourne sur le port 5000");
   });
