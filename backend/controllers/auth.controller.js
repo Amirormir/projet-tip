@@ -4,6 +4,7 @@ import User from "../models/user/user.schema.js";
 import { AuthErrors } from "../errors/auth.errors.js";
 import tokenService from "../services/token.service.js";
 import Blacklist from "../models/blacklist.js";
+import { validatePassword } from "../validators/user.validator.js";
 
 export const register = async (req, res, next) => {
   try {
@@ -14,6 +15,16 @@ export const register = async (req, res, next) => {
       profil: { firstName, lastName, birthDate, gender, phone },
       address: { address, addressComplement, city, zipCode, country },
     } = req.body;
+
+    // Valider le mot de passe
+    try {
+      validatePassword(password);
+    } catch (error) {
+      return res.status(400).json({
+        status: "FAILED",
+        message: error.message,
+      });
+    }
 
     // Créer l'utilisateur
     const newUser = new User({
@@ -65,6 +76,12 @@ export const register = async (req, res, next) => {
       return res.status(400).json({
         status: "FAILED",
         message: "Cet email ou nom d'utilisateur est déjà utilisé",
+      });
+    }
+    if (err.message && err.message.includes("mot de passe")) {
+      return res.status(400).json({
+        status: "FAILED",
+        message: err.message,
       });
     }
     next(err);

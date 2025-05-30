@@ -8,7 +8,13 @@ import { errorHandler } from "./middlewares/error.middleware.js";
 import { authenticate } from "./middlewares/auth.middleware.js";
 import { checkBlacklist } from "./middlewares/blacklist.middleware.js";
 
-dotenv.config();
+// Charger le bon fichier d'environnement
+if (process.env.NODE_ENV === "test") {
+  dotenv.config({ path: ".env.test" });
+} else {
+  dotenv.config();
+}
+
 console.log("MONGO_URL:", process.env.MONGO_URL);
 
 const app = express();
@@ -40,6 +46,10 @@ mongoose
   });
 
 // Start server
-app.listen(5000, () => {
-  console.log("Serveur tourne sur le port 5000");
-});
+if (process.env.NODE_ENV !== "test") {
+  app.listen(5000, () => {
+    console.log("Serveur tourne sur le port 5000");
+  });
+}
+
+export { app };
